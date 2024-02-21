@@ -6,6 +6,7 @@
         <module>book</module>
         <module>entity</module>
         <module>order</module>
+        <module>gateway</module>
     </modules>
     <parent>
         <groupId>org.springframework.boot</groupId>
