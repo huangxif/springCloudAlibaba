@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/book/book.iml" filepath="$PROJECT_DIR$/book/book.iml" />
+      <module fileurl="file://$PROJECT_DIR$/entity/entity.iml" filepath="$PROJECT_DIR$/entity/entity.iml" />
+      <module fileurl="file://$PROJECT_DIR$/order/order.iml" filepath="$PROJECT_DIR$/order/order.iml" />
+      <module fileurl="file://$PROJECT_DIR$/springCloudAlibaba.iml" filepath="$PROJECT_DIR$/springCloudAlibaba.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.mvn/wrapper/wrapper.iml" filepath="$PROJECT_DIR$/.mvn/wrapper/wrapper.iml" />
+    </modules>
+  </component>
+</project>
