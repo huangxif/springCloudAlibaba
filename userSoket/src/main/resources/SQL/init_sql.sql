@@ -1,0 +1,56 @@
+#用户表
+CREATE TABLE IF NOT EXISTS  QQ_USER (
+    UID  INT(11) NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+    USER_NICK_NAME  VARCHAR (64) NOT NULL  COMMENT '用户昵称',
+    USER_NAME  VARCHAR (64) default NULL  COMMENT '用户真实姓名',
+    SEX  tinyint default 1  COMMENT '用户性别0:未知,1:男,2:女',
+    BIRTHDAY  date default NULL  COMMENT '生日',
+    CONSTELLATION  tinyint default NULL  COMMENT '星座',
+    ADDRESS  VARCHAR(60) default NULL  COMMENT '现居住地',
+    HOMETOWN  VARCHAR(60) default NULL  COMMENT '故乡',
+    PICTURE  VARCHAR(100) default NULL  COMMENT '头像',
+    SIGNATURE   VARCHAR(100) default NULL  COMMENT '个性说明',
+    PHONE   VARCHAR(20) NOT NULL  COMMENT '手机号',
+    EMAI   VARCHAR(50) NOT NULL  COMMENT '电子邮箱',
+    PASSWORD   VARCHAR(80) NOT NULL  COMMENT '密码',
+    USER_STATUS  tinyint default 1  COMMENT '用户状态:',
+    PRIMARY KEY (UID),
+    UNION KEY EMAI_INDEX (EMAI),
+    UNION KEY PHONE_INDEX (PHONE),
+    KEY USER_NICK_NAME_INDEX (USER_NICK_NAME)
+) ENGINE=INNODB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8 COMMENT'用户表';
+
+#好友表
+CREATE TABLE IF NOT EXISTS  QQ_FRIENDS (
+    FID  INT(11) NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+    FRIEND_NICK_NAME  VARCHAR (64) NOT NULL  COMMENT '备注',
+    USER_ID  VARCHAR (64) default NULL  COMMENT '用户ID',
+    FRIEND_USER_ID  VARCHAR (64) default NULL  COMMENT '好友ID',
+    FRIEND_TYPE  tinyint default 1  COMMENT '好友类别',
+    FRIEND_GROUP  tinyint default 1  COMMENT '好友分组',
+    CREATE_TIME datetime NOT NULL COMMENT '添加时间',
+    UPDATE_TIME datetime NOT NULL COMMENT '修改时间',
+    PRIMARY KEY (FID),
+     KEY FRIENDS_USER_ID_INDEX (USER_ID),
+     KEY FRIEND_USER_ID_INDEX (FRIEND_USER_ID)
+) ENGINE=INNODB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8 COMMENT'好友表';
+
+#聊天记录表
+CREATE TABLE IF NOT EXISTS  QQ_chatting_records (
+    FID  INT(11) NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+    FRIEND_NICK_NAME  VARCHAR (64) NOT NULL  COMMENT '备注',
+    USER_ID  VARCHAR (64) default NULL  COMMENT '用户ID',
+    FRIEND_USER_ID  VARCHAR (64) default NULL  COMMENT '好友ID',
+    FRIEND_LEVEL  tinyint default 1  COMMENT '好友等级:1普通好友,2:特别关心',
+    FRIEND_GROUP  tinyint default 1  COMMENT '好友分组',
+    FRIEND_TYPE  tinyint default 1  COMMENT '好友类型:1好友,2群聊',
+    FRIEND_TYPE  tinyint default 1  COMMENT '好友类型:1好友,2群聊',
+    message_notification tinyint default 1 COMMENT'消息提醒类型:1接收消息并提醒,2:接受消息不提醒,3:屏蔽消息,4:特别提醒',
+    message_music tinyint default 1 COMMENT'特殊提示音:',
+    CREATE_TIME datetime NOT NULL COMMENT '添加时间',
+    UPDATE_TIME datetime NOT NULL COMMENT '修改时间',
+
+    PRIMARY KEY (FID),
+    KEY FRIENDS_USER_ID_INDEX (USER_ID),
+    KEY FRIEND_USER_ID_INDEX (FRIEND_USER_ID)
+    ) ENGINE=INNODB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8 COMMENT'好友表';
