@@ -1,8 +1,8 @@
-package com.my.qq.send.controller;
+package com.easy.qq.send.controller;
 
-import com.my.qq.conmon.Result;
-import com.my.qq.send.socket.SendService;
-import com.my.qq.send.vo.MessageVo;
+import com.easy.qq.conmon.Result;
+import com.easy.qq.send.socket.SendService;
+import com.easy.qq.send.vo.MessageVo;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;

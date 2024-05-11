@@ -1,4 +1,4 @@
-package com.my.qq.conmon;
+package com.easy.qq.conmon;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

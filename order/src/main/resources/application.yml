@@ -4,14 +4,14 @@ spring:
   application:
     name: order-service
   cloud:
-    nacos:
-      server-addr: 127.0.0.1:8848
-      discovery:
-        username: nacos
-        password: nacos
-        namespace: 9e5e194a-ff8a-42f3-8b77-d7831880fc6b
-        group: book
-book-service:
-  ribbon:
-    NFLoadBalancerRuleClassName: com.qy.config.MyRule
+#    nacos:
+#      server-addr: 127.0.0.1:8848
+#      discovery:
+#        username: nacos
+#        password: nacos
+#        namespace: 9e5e194a-ff8a-42f3-8b77-d7831880fc6b
+#        group: book
+#book-service:
+#  ribbon:
+#    NFLoadBalancerRuleClassName: com.qy.config.MyRule
 

@@ -1,6 +1,6 @@
-package com.my.qq.config;
+package com.easy.qq.config;
 
-import com.my.qq.send.socket.NettyServer;
+import com.easy.qq.send.socket.NettyServer;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.stereotype.Component;

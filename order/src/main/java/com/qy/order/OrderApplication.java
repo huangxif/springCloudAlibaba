@@ -15,7 +15,18 @@ import org.springframework.context.ConfigurableApplicationContext;
 //@RibbonClients(value = {@RibbonClient(name = "book-service", configuration = MyRoleConfig.class)})
 public class OrderApplication {
     public static void main(String[] args) {
-        ConfigurableApplicationContext applicationContext = SpringApplication.run(OrderApplication.class);
+//        ConfigurableApplicationContext applicationContext = SpringApplication.run(OrderApplication.class);
+
+        StackTraceElement[] stackTrace = new RuntimeException().getStackTrace();
+        StackTraceElement[] var2 = stackTrace;
+        int var3 = stackTrace.length;
+
+        for(int var4 = 0; var4 < var3; ++var4) {
+            StackTraceElement stackTraceElement = var2[var4];
+            if ("main".equals(stackTraceElement.getMethodName())) {
+                System.out.println(stackTraceElement.getClassName());
+            }
+        }
     }
 
 //    @Bean
@@ -23,4 +34,6 @@ public class OrderApplication {
 //    public RestTemplate getRestTemplate(RestTemplateBuilder builder){
 //        return builder.build();
 //    }
+
+
 }
