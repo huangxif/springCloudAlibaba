@@ -1,6 +1,6 @@
-package com.easy.qq.send.socket;
+package com.easy.qq.web.send.socket;
 
-import com.easy.qq.send.service.MySocketHandler;
+import com.easy.qq.web.send.service.MySocketHandler;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;

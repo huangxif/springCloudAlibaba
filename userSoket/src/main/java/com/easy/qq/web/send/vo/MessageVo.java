@@ -1,4 +1,4 @@
-package com.easy.qq.send.vo;
+package com.easy.qq.web.send.vo;
 
 import lombok.Data;
 

@@ -1,8 +1,8 @@
-package com.easy.qq.send.socket;
+package com.easy.qq.web.send.service;
 
 import com.easy.qq.conmon.Result;
-import com.easy.qq.send.service.MySocketHandler;
-import com.easy.qq.send.vo.MessageVo;
+import com.easy.qq.web.send.service.MySocketHandler;
+import com.easy.qq.web.send.vo.MessageVo;
 import io.netty.channel.Channel;
 import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 import lombok.extern.slf4j.Slf4j;

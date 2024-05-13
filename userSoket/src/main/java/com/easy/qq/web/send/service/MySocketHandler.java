@@ -1,4 +1,4 @@
-package com.easy.qq.send.service;
+package com.easy.qq.web.send.service;
 
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandler;
