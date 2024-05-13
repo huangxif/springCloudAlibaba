@@ -35,7 +35,9 @@
         <mybatis-plus-boot-starter.version>3.5.5</mybatis-plus-boot-starter.version>
         <druid-spring-boot-starter.version>1.1.22</druid-spring-boot-starter.version>
         <mysql.version>8.0.28</mysql.version>
-
+        <mysql.version>8.0.28</mysql.version>
+        <spring-boot-starter-amqp.version>2.3.11.RELEASE</spring-boot-starter-amqp.version>
+        <hutool-all.version>5.8.26</hutool-all.version>
     </properties>
     <dependencyManagement>
         <dependencies>
@@ -89,6 +91,12 @@
             <dependency>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-starter-amqp</artifactId>
+                <version>${spring-boot-starter-amqp.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>cn.hutool</groupId>
+                <artifactId>hutool-all</artifactId>
+                <version>${hutool-all.version}</version>
             </dependency>
         </dependencies>
 
