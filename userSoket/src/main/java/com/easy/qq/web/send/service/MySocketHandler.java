@@ -27,7 +27,7 @@ public class MySocketHandler extends ChannelInboundHandlerAdapter {
     /**
      * 存储连接
      */
-    public final ConcurrentHashMap<String, Channel> CONCURRENT_HASH_MAP = new ConcurrentHashMap();
+    public final ConcurrentHashMap<Integer, Channel> CONCURRENT_HASH_MAP = new ConcurrentHashMap();
 
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
@@ -66,7 +66,8 @@ public class MySocketHandler extends ChannelInboundHandlerAdapter {
             }
             AttributeKey<String> attributeKey = AttributeKey.valueOf(USER_TOKEN_KEY);
             channel.attr(attributeKey).set(userToken);
-            CONCURRENT_HASH_MAP.put(userToken, ctx.channel());
+            //TODO 解析userId
+            CONCURRENT_HASH_MAP.put(Integer.valueOf(userToken), ctx.channel());
         }
     }
 

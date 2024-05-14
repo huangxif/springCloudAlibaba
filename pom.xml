@@ -38,6 +38,8 @@
         <mysql.version>8.0.28</mysql.version>
         <spring-boot-starter-amqp.version>2.3.11.RELEASE</spring-boot-starter-amqp.version>
         <hutool-all.version>5.8.26</hutool-all.version>
+        <spring-boot-starter-validation.version>2.3.2.RELEASE</spring-boot-starter-validation.version>
+
     </properties>
     <dependencyManagement>
         <dependencies>
@@ -97,6 +99,13 @@
                 <groupId>cn.hutool</groupId>
                 <artifactId>hutool-all</artifactId>
                 <version>${hutool-all.version}</version>
+            </dependency>
+            <!--参数校验依赖-->
+            <!-- 对于Spring Boot 2.4及以上版本，由于模块化拆分，需要单独引入验证相关的starter -->
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-starter-validation</artifactId>
+                <version>${spring-boot-starter-validation.version}</version>
             </dependency>
         </dependencies>
 

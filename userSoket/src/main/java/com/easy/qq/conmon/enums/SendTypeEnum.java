@@ -1,11 +1,11 @@
-package com.easy.qq.conmon;
+package com.easy.qq.conmon.enums;
 
 import java.util.Arrays;
 
 /**
  * 消息类型
  */
-public enum MessageTypeEnum {
+public enum SendTypeEnum {
     /**
      * 注册消息
      */
@@ -27,7 +27,7 @@ public enum MessageTypeEnum {
      */
     private String desc;
 
-    MessageTypeEnum(int type, String desc) {
+    SendTypeEnum(int type, String desc) {
         this.type = type;
         this.desc = desc;
     }
@@ -46,11 +46,11 @@ public enum MessageTypeEnum {
      * @param type
      * @return
      */
-    public MessageTypeEnum getMessageTypeByType(Integer type) {
+    public SendTypeEnum getSendTypeByType(Integer type) {
         //不在枚举区间的默认返回好友消息
         if (type == null || type < 1 || type > GROUP_MSG.getType()) {
             return FRIEND_MSG;
         }
-        return Arrays.stream(MessageTypeEnum.values()).filter(messageTypeEnum -> type == messageTypeEnum.getType()).findFirst().get();
+        return Arrays.stream(SendTypeEnum.values()).filter(messageTypeEnum -> type == messageTypeEnum.getType()).findFirst().get();
     }
 }

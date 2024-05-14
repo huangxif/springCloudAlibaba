@@ -1,6 +1,7 @@
 package com.easy.qq.web.send;
 
 import com.easy.qq.conmon.Result;
+import com.easy.qq.entity.QqFriendChattingRecords;
 import com.easy.qq.web.send.service.SendService;
 import com.easy.qq.web.send.vo.MessageVo;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -22,7 +23,7 @@ public class SendController {
      * @param messageVo
      */
     @PostMapping("one")
-    public Result<Void> sendMsg(@RequestBody MessageVo<String> messageVo) {
-        return sendService.sendMsg(messageVo);
+    public Result<Void> sendMsg(@RequestBody QqFriendChattingRecords record) {
+        return sendService.sendMsg(record);
     }
 }
