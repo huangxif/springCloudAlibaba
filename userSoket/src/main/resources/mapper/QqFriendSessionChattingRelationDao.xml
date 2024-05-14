@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.easy.qq.mapper.QqFriendSessionChattingRelationMapper">
+
+    <resultMap type="com.easy.qq.entity.QqFriendSessionChattingRelation" id="QqFriendSessionChattingRelationMap">
+        <result property="crid" column="CRID" jdbcType="INTEGER"/>
+        <result property="cid" column="CID" jdbcType="INTEGER"/>
+        <result property="sid" column="SID" jdbcType="INTEGER"/>
+        <result property="isLast" column="IS_LAST" jdbcType="INTEGER"/>
+        <result property="isRead" column="IS_READ" jdbcType="INTEGER"/>
+    </resultMap>
+
+    <update id="updateLastFlag">
+        update qq_friend_session_chatting_relation
+        set isLast=0
+        where SID in (#{toSessionId}, #{fromSession})
+    </update>
+</mapper>
+

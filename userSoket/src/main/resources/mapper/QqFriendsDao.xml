@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.easy.qq.mapper.QqFriendsMapper">
+
+    <resultMap type="com.easy.qq.entity.QqFriends" id="QqFriendsMap">
+        <result property="fid" column="FID" jdbcType="INTEGER"/>
+        <result property="friendNickName" column="FRIEND_NICK_NAME" jdbcType="VARCHAR"/>
+        <result property="userId" column="USER_ID" jdbcType="INTEGER"/>
+        <result property="friendUserId" column="FRIEND_USER_ID" jdbcType="VARCHAR"/>
+        <result property="rid" column="RID" jdbcType="INTEGER"/>
+        <result property="friendType" column="FRIEND_TYPE" jdbcType="INTEGER"/>
+        <result property="messageReminding" column="MESSAGE_REMINDING" jdbcType="INTEGER"/>
+        <result property="createTime" column="CREATE_TIME" jdbcType="TIMESTAMP"/>
+        <result property="updateTime" column="UPDATE_TIME" jdbcType="TIMESTAMP"/>
+    </resultMap>
+
+
+</mapper>
+
