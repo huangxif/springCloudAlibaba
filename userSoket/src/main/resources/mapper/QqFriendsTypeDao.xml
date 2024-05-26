@@ -8,93 +8,22 @@
         <result property="createTime" column="CREATE_TIME" jdbcType="TIMESTAMP"/>
     </resultMap>
 
-    <!--查询单个-->
-    <select id="queryById" resultMap="QqFriendsTypeMap">
-        select
-          TID, TYPE_NAME, CREATE_TIME
-        from qq_friends_type
-        where TID = #{tid}
+    <select id="getQqFriendsType" parameterType="com.easy.qq.web.user.vo.QqFriendsTypeVo">
+        SELECT
+            t.*,
+            count(1) as friendNum,
+            f.RID,
+            f.USER_ID
+        FROM
+            `qq_friends` f
+                LEFT JOIN qq_friends_type_relation r ON r.RID = f.RID
+                LEFT JOIN qq_friends_type t ON t.TID = r.TID
+        where f.USER_ID=#{uid}
+        GROUP BY
+            f.RID
+        ORDER BY
+            f.rid
     </select>
-
-    <!--查询指定行数据-->
-    <select id="queryAllByLimit" resultMap="QqFriendsTypeMap">
-        select
-          TID, TYPE_NAME, CREATE_TIME
-        from qq_friends_type
-        <where>
-            <if test="tid != null">
-                and TID = #{tid}
-            </if>
-            <if test="typeName != null and typeName != ''">
-                and TYPE_NAME = #{typeName}
-            </if>
-            <if test="createTime != null">
-                and CREATE_TIME = #{createTime}
-            </if>
-        </where>
-        limit #{pageable.offset}, #{pageable.pageSize}
-    </select>
-
-    <!--统计总行数-->
-    <select id="count" resultType="java.lang.Long">
-        select count(1)
-        from qq_friends_type
-        <where>
-            <if test="tid != null">
-                and TID = #{tid}
-            </if>
-            <if test="typeName != null and typeName != ''">
-                and TYPE_NAME = #{typeName}
-            </if>
-            <if test="createTime != null">
-                and CREATE_TIME = #{createTime}
-            </if>
-        </where>
-    </select>
-
-    <!--新增所有列-->
-    <insert id="insert" keyProperty="tid" useGeneratedKeys="true">
-        insert into qq_friends_type(TYPE_NAME, CREATE_TIME)
-        values (#{typeName}, #{createTime})
-    </insert>
-
-    <insert id="insertBatch" keyProperty="tid" useGeneratedKeys="true">
-        insert into qq_friends_type(TYPE_NAME, CREATE_TIME)
-        values
-        <foreach collection="entities" item="entity" separator=",">
-        (#{entity.typeName}, #{entity.createTime})
-        </foreach>
-    </insert>
-
-    <insert id="insertOrUpdateBatch" keyProperty="tid" useGeneratedKeys="true">
-        insert into qq_friends_type(TYPE_NAME, CREATE_TIME)
-        values
-        <foreach collection="entities" item="entity" separator=",">
-            (#{entity.typeName}, #{entity.createTime})
-        </foreach>
-        on duplicate key update
-        TYPE_NAME = values(TYPE_NAME),
-        CREATE_TIME = values(CREATE_TIME)
-    </insert>
-
-    <!--通过主键修改数据-->
-    <update id="update">
-        update qq_friends_type
-        <set>
-            <if test="typeName != null and typeName != ''">
-                TYPE_NAME = #{typeName},
-            </if>
-            <if test="createTime != null">
-                CREATE_TIME = #{createTime},
-            </if>
-        </set>
-        where TID = #{tid}
-    </update>
-
-    <!--通过主键删除-->
-    <delete id="deleteById">
-        delete from qq_friends_type where TID = #{tid}
-    </delete>
 
 </mapper>
 

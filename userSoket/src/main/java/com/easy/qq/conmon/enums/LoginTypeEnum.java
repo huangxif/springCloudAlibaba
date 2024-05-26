@@ -10,7 +10,7 @@ public enum LoginTypeEnum {
     /**
      * 账号密码
      */
-    account_password(1, "账号密码"),
+    ACCOUNT_PASSWORD(1, "账号密码"),
     /**
      * 手机验证码
      */

@@ -4,6 +4,7 @@ import cn.hutool.core.collection.CollectionUtil;
 import com.baomidou.mybatisplus.extension.conditions.query.LambdaQueryChainWrapper;
 import com.easy.qq.conmon.Result;
 import com.easy.qq.conmon.enums.FriendsTypeEnum;
+import com.easy.qq.conmon.enums.LoginTypeEnum;
 import com.easy.qq.conmon.enums.MessageRemindingEnum;
 import com.easy.qq.conmon.enums.MessageTypeEnum;
 import com.easy.qq.entity.QqFriendChattingRecords;
@@ -13,8 +14,10 @@ import com.easy.qq.entity.QqUser;
 import com.easy.qq.mapper.*;
 import com.easy.qq.web.send.service.SendService;
 import com.easy.qq.web.user.req.UserLoginReq;
+import com.easy.qq.web.user.req.UserVo;
 import com.easy.qq.web.user.res.UserLoginRes;
-import com.easy.qq.web.user.vo.UserVo;
+import com.easy.qq.web.user.vo.QqFriendSessionVo;
+import com.easy.qq.web.user.vo.QqFriendsTypeVo;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -47,7 +50,8 @@ public class UserService {
     private QqFriendSessionChattingRelationMapper chattingRelationMapper;
     @Resource
     private SendService sendService;
-
+    @Resource
+    private QqFriendsTypeMapper friendsTypeMapper;
 
     /**
      * 注册用户
@@ -127,7 +131,72 @@ public class UserService {
      * @return
      */
     public Result<UserLoginRes> userLogin(UserLoginReq req) {
-//        if(req)
+        UserLoginRes res = new UserLoginRes();
+        //登录校验密码
+        QqUser user = getUser(req);
+        res.setUser(user);
+        //TODO 查询会话列表
+        getSessionList(user.getUid());
+        //查询联系人
+        getQqFriendsType(user.getUid());
+        //个人设置
+        return null;
+    }
+
+    /**
+     * 查询联系人
+     *
+     * @param uid
+     */
+    private List<QqFriendsTypeVo> getQqFriendsType(Integer uid) {
+        LambdaQueryChainWrapper<QqFriends> lambdaQuery = new LambdaQueryChainWrapper(qqFriendsMapper);
+        List<QqFriendsTypeVo> vo = friendsTypeMapper.getQqFriendsType(uid);
+
+        vo.stream().filter(typeVo -> typeVo.getFriendNum() > 0).forEach(typeVo -> {
+            typeVo.setQqFriends(lambdaQuery.eq(QqFriends::getUserId, uid).eq(QqFriends::getRid, typeVo.getRid()).list());
+        });
+        return vo;
+    }
+
+    /**
+     * 登录校验
+     *
+     * @param req
+     * @return
+     */
+    private QqUser getUser(UserLoginReq req) {
+        LambdaQueryChainWrapper<QqUser> lambdaQuery = new LambdaQueryChainWrapper(qqUserMapper);
+        QqUser user;
+        if (LoginTypeEnum.ACCOUNT_PASSWORD.getType() == req.getLoginType()) {
+            user = lambdaQuery.eq(QqUser::getUid, req.getUserId()).getEntity();
+        } else if (LoginTypeEnum.PHONE_CODE.getType() == req.getLoginType()) {
+            user = lambdaQuery.eq(QqUser::getPhone, req.getPhone()).getEntity();
+        } else if (LoginTypeEnum.EMAI_CODE.getType() == req.getLoginType()) {
+            user = lambdaQuery.eq(QqUser::getEmai, req.getEmai()).getEntity();
+        } else {
+            throw new RuntimeException("不支持的登陆方式");
+        }
+        return user;
+    }
+
+    /**
+     * 查询会话列表
+     *
+     * @param userId
+     * @return
+     */
+    private QqFriendSessionVo getSessionList(Integer userId) {
+//        LambdaQueryChainWrapper<QqUser> lambdaQuery = new LambdaQueryChainWrapper(sessionMapper);
+//        QqUser user;
+//        if (LoginTypeEnum.ACCOUNT_PASSWORD.getType() == req.getLoginType()) {
+//            user = lambdaQuery.eq(QqUser::getUid, req.getUserId()).getEntity();
+//        } else if (LoginTypeEnum.PHONE_CODE.getType() == req.getLoginType()) {
+//            user = lambdaQuery.eq(QqUser::getPhone, req.getPhone()).getEntity();
+//        } else if (LoginTypeEnum.EMAI_CODE.getType() == req.getLoginType()) {
+//            user = lambdaQuery.eq(QqUser::getEmai, req.getEmai()).getEntity();
+//        } else {
+//            throw new RuntimeException("不支持的登陆方式");
+//        }
         return null;
     }
 }

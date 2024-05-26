@@ -1,4 +1,4 @@
-package com.easy.qq.web.user.vo;
+package com.easy.qq.web.user.req;
 
 import com.easy.qq.entity.QqUser;
 import lombok.Data;

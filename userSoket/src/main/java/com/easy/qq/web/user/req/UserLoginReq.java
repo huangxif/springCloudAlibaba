@@ -20,7 +20,7 @@ public class UserLoginReq extends ReqBase {
     /**
      * 用户ID
      */
-    private String userId;
+    private Integer userId;
     /**
      * 手机号
      */

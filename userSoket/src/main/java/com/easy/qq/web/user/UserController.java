@@ -4,7 +4,7 @@ import com.easy.qq.conmon.Result;
 import com.easy.qq.web.user.req.UserLoginReq;
 import com.easy.qq.web.user.res.UserLoginRes;
 import com.easy.qq.web.user.service.UserService;
-import com.easy.qq.web.user.vo.UserVo;
+import com.easy.qq.web.user.req.UserVo;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
