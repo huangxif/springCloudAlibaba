@@ -1,16 +1,13 @@
 package com.easy.qq.web.user.service;
 
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.jwt.JWTUtil;
+import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.extension.conditions.query.LambdaQueryChainWrapper;
 import com.easy.qq.conmon.Result;
-import com.easy.qq.conmon.enums.FriendsTypeEnum;
-import com.easy.qq.conmon.enums.LoginTypeEnum;
-import com.easy.qq.conmon.enums.MessageRemindingEnum;
-import com.easy.qq.conmon.enums.MessageTypeEnum;
-import com.easy.qq.entity.QqFriendChattingRecords;
-import com.easy.qq.entity.QqFriends;
-import com.easy.qq.entity.QqFriendsTypeRelation;
-import com.easy.qq.entity.QqUser;
+import com.easy.qq.conmon.enums.*;
+import com.easy.qq.conmon.utils.RedisCacheUtil;
+import com.easy.qq.entity.*;
 import com.easy.qq.mapper.*;
 import com.easy.qq.web.send.service.SendService;
 import com.easy.qq.web.user.req.UserLoginReq;
@@ -22,6 +19,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
@@ -32,6 +32,27 @@ public class UserService {
      * 机器人UID
      */
     public static final Integer UID = 1;
+
+    /**
+     * 默认查询多少条消息记录
+     */
+    public static final int MESSAGE_LIMIT = 100;
+
+    /**
+     * redis token缓存键值
+     */
+    public static final String LOGIN_TOKEN_REDIS_KEY = "LOGIN_TOKEN_REDIS_KEY";
+
+    /**
+     * redis token缓存键值
+     */
+    public static final long LOGIN_TOKEN_REDIS_KEY_TIME = 60 * 60 * 24;
+
+    /**
+     * TOKEN_KE秘钥
+     */
+    public static final String TOKEN_KEY = "TOKEN_KEY@123456";
+
     /**
      * 注册欢迎消息
      */
@@ -52,6 +73,10 @@ public class UserService {
     private SendService sendService;
     @Resource
     private QqFriendsTypeMapper friendsTypeMapper;
+    @Resource
+    private QqFriendGroupMapper qqFriendGroupMapper;
+    @Resource
+    private RedisCacheUtil redisCacheUtil;
 
     /**
      * 注册用户
@@ -87,8 +112,8 @@ public class UserService {
      * @return
      */
     private int addDefaultGroup(Integer uid) {
-        QqFriendsTypeRelation myFriend = new QqFriendsTypeRelation(null, uid, FriendsTypeEnum.MY_FRIEND.getId(), new Date());
-        QqFriendsTypeRelation blacklist = new QqFriendsTypeRelation(null, uid, FriendsTypeEnum.BLACKLIST.getId(), new Date());
+        QqFriendsTypeRelation myFriend = new QqFriendsTypeRelation(null, uid, FriendsGrouEnum.MY_FRIEND.getId(), new Date());
+        QqFriendsTypeRelation blacklist = new QqFriendsTypeRelation(null, uid, FriendsGrouEnum.BLACKLIST.getId(), new Date());
         typeRelationMapper.insert(myFriend);
         typeRelationMapper.insert(blacklist);
         return myFriend.getRid();
@@ -135,12 +160,36 @@ public class UserService {
         //登录校验密码
         QqUser user = getUser(req);
         res.setUser(user);
-        //TODO 查询会话列表
-        getSessionList(user.getUid());
+        res.setSessionList(getSessionList(user.getUid()));
         //查询联系人
-        getQqFriendsType(user.getUid());
-        //个人设置
-        return null;
+        res.setQqFriendsTypeList(getQqFriendsType(user.getUid()));
+        //TODO 个人设置详情
+        //查询群聊
+        LambdaQueryChainWrapper<QqFriends> lambdaQuery = new LambdaQueryChainWrapper(qqFriendsMapper);
+        List<QqFriends> qqFriends = lambdaQuery.eq(QqFriends::getUserId, user.getUid()).eq(QqFriends::getFriendType, FriendTypeEnum.GROUP.getCode()).orderByDesc(QqFriends::getFid).list();
+        res.setGroupFriends(qqFriends);
+        JSONObject tokenMap = new JSONObject();
+        tokenMap.put("userId", user.getUid());
+        tokenMap.put("source", req.getSource());
+        //生成token
+        res.setToken(getToken(tokenMap));
+        WebSourceEnum sourceEnum = WebSourceEnum.getByValue(req.getSource());
+        redisCacheUtil.set(LOGIN_TOKEN_REDIS_KEY + "_" + sourceEnum.getCode() + "_" + user.getUid(), res.getToken(), LOGIN_TOKEN_REDIS_KEY_TIME);
+        redisCacheUtil.set(LOGIN_TOKEN_REDIS_KEY + "_" + sourceEnum.getCode() + "_" + res.getToken(), user.getUid(), LOGIN_TOKEN_REDIS_KEY_TIME);
+        return new Result(true, "登录成功", "200", res);
+    }
+
+    /**
+     * 获取token
+     *
+     * @param map
+     * @return
+     */
+    public static String getToken(JSONObject map) {
+        String str = JWTUtil.createToken(map, TOKEN_KEY.getBytes(StandardCharsets.UTF_8));
+        return str;
+//        JWT jwt = JWTUtil.parseToken(str);
+//        System.out.println(jwt.getPayload().getClaim("userId"));
     }
 
     /**
@@ -153,6 +202,7 @@ public class UserService {
         List<QqFriendsTypeVo> vo = friendsTypeMapper.getQqFriendsType(uid);
 
         vo.stream().filter(typeVo -> typeVo.getFriendNum() > 0).forEach(typeVo -> {
+            //TODO 好友昵称
             typeVo.setQqFriends(lambdaQuery.eq(QqFriends::getUserId, uid).eq(QqFriends::getRid, typeVo.getRid()).list());
         });
         return vo;
@@ -185,18 +235,31 @@ public class UserService {
      * @param userId
      * @return
      */
-    private QqFriendSessionVo getSessionList(Integer userId) {
-//        LambdaQueryChainWrapper<QqUser> lambdaQuery = new LambdaQueryChainWrapper(sessionMapper);
-//        QqUser user;
-//        if (LoginTypeEnum.ACCOUNT_PASSWORD.getType() == req.getLoginType()) {
-//            user = lambdaQuery.eq(QqUser::getUid, req.getUserId()).getEntity();
-//        } else if (LoginTypeEnum.PHONE_CODE.getType() == req.getLoginType()) {
-//            user = lambdaQuery.eq(QqUser::getPhone, req.getPhone()).getEntity();
-//        } else if (LoginTypeEnum.EMAI_CODE.getType() == req.getLoginType()) {
-//            user = lambdaQuery.eq(QqUser::getEmai, req.getEmai()).getEntity();
-//        } else {
-//            throw new RuntimeException("不支持的登陆方式");
-//        }
+    private List<QqFriendSessionVo> getSessionList(Integer userId) {
+        LambdaQueryChainWrapper<QqFriends> friendsLambdaQuery = new LambdaQueryChainWrapper(qqFriendsMapper);
+        LambdaQueryChainWrapper<QqFriendGroup> groupLambdaQuery = new LambdaQueryChainWrapper(qqFriendGroupMapper);
+        LambdaQueryChainWrapper<QqUser> userLambdaQuery = new LambdaQueryChainWrapper(qqUserMapper);
+        List<QqFriendSessionVo> vo = sessionMapper.getSessionList(userId);
+        if (CollectionUtil.isEmpty(vo)) {
+            return new ArrayList<>();
+        }
+        vo.forEach(item -> {
+            //查询好友信息
+            item.setFriend(friendsLambdaQuery.eq(QqFriends::getUserId, userId).eq(QqFriends::getFriendUserId, item.getFriendUserId()).getEntity());
+
+            //查询好友具体信息
+            if (FriendTypeEnum.FRIEND.getCode() == item.getSessionType()) {
+                item.setFriendUser(userLambdaQuery.eq(QqUser::getUid, item.getFriendUserId()).getEntity());
+            } else {
+                item.setGroup(groupLambdaQuery.eq(QqFriendGroup::getGid, item.getFriendUserId()).getEntity());
+            }
+            //查询消息记录
+            item.setMessageList(chattingRecordsMapper.getChattingRecords(null, item.getSid(), MESSAGE_LIMIT));
+            if (CollectionUtil.isNotEmpty(item.getMessageList())) {
+                Collections.reverse(item.getMessageList());
+            }
+
+        });
         return null;
     }
 }

@@ -6,6 +6,8 @@ import com.easy.qq.entity.QqFriends;
 import com.easy.qq.entity.QqUser;
 import lombok.Data;
 
+import java.util.List;
+
 @Data
 public class QqFriendSessionVo extends QqFriendSession {
     private static final long serialVersionUID = 1766022444339212363L;
@@ -22,4 +24,9 @@ public class QqFriendSessionVo extends QqFriendSession {
      * 好友用户信息
      */
     private QqFriendGroup group;
+
+    /**
+     * 消息列表
+     */
+    private List<ChattingRecordsVo> messageList;
 }

@@ -16,6 +16,16 @@
         <result property="messageAtId" column="MESSAGE_AT_ID" jdbcType="INTEGER"/>
     </resultMap>
 
+    <select id="getChattingRecords" resultType="com.easy.qq.web.user.vo.ChattingRecordsVo">
+        select *
+        from qq_friend_session_chatting_relation r
+        left join qq_friend_chatting_records c on c.CID = r.cid
+        where r.SID = #{sid}
+        <if test="cid !=null ">
+            and r.cid>#{cid}
+        </if>
+        order r.CRID desc limit #{messageLimit}
+    </select>
 
 </mapper>
 
