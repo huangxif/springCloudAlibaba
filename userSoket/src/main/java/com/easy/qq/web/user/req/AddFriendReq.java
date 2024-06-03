@@ -32,5 +32,9 @@ public class AddFriendReq extends ReqBase {
     @Max(value = 1, message = "friendType参数有误")
     private Integer friendType;
 
-
+    /**
+     * message
+     */
+    @NotNull(message = "message不可为空")
+    private String message;
 }

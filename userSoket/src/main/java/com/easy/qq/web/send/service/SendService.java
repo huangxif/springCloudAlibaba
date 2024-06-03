@@ -1,12 +1,14 @@
 package com.easy.qq.web.send.service;
 
 import cn.hutool.core.collection.CollectionUtil;
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.conditions.query.LambdaQueryChainWrapper;
 import com.easy.qq.conmon.Result;
+import com.easy.qq.conmon.enums.BusinessTypeEnum;
+import com.easy.qq.entity.QqBusinessMessage;
 import com.easy.qq.entity.QqFriendChattingRecords;
 import com.easy.qq.entity.QqFriendSession;
 import com.easy.qq.entity.QqFriendSessionChattingRelation;
+import com.easy.qq.mapper.QqBusinessMessageMapper;
 import com.easy.qq.mapper.QqFriendChattingRecordsMapper;
 import com.easy.qq.mapper.QqFriendSessionChattingRelationMapper;
 import com.easy.qq.mapper.QqFriendSessionMapper;
@@ -30,14 +32,22 @@ public class SendService {
     private QqFriendChattingRecordsMapper chattingRecordsMapper;
     @Resource
     private QqFriendSessionChattingRelationMapper chattingRelationMapper;
+    @Resource
+    private QqBusinessMessageMapper businessMessageMapper;
 
     /**
      * 发送单人消息
      *
      * @param record
      */
-    public Result<Void> sendMsg(QqFriendChattingRecords record) {
-//        sendMessageBefore(record);
+    public Result<Void> sendMsg(QqFriendChattingRecords record, BusinessTypeEnum businessType) {
+        if (businessType == null || businessType.equals(BusinessTypeEnum.FRIEND_MESSAGE)) {
+            sendMessageBefore(record);
+        }
+        if (businessType.equals(BusinessTypeEnum.ADD_FRIEND)) {
+            sendAddFriendMessageBefore(record);
+        }
+
         //TODO 单机直接发送,分布式需要借助redis,MQ
         Map<String, Channel> channelMap = socketHandler.CONCURRENT_HASH_MAP.get(record.getToId());
         if (CollectionUtil.isEmpty(channelMap)) {
@@ -47,6 +57,26 @@ public class SendService {
             entry.getValue().writeAndFlush(new TextWebSocketFrame(record.getChattingText()));
         });
         return new Result(true, "发送成功", "000000", null);
+    }
+
+    /**
+     * 发送添加好友信息之前
+     */
+    private void sendAddFriendMessageBefore(QqFriendChattingRecords record) {
+        QqBusinessMessage user = new QqBusinessMessage();
+        user.setCreateTime(new Date());
+        user.setUpdateTime(user.getCreateTime());
+        user.setMessage(record.getChattingText());
+        user.setFromId(record.getFromId());
+        user.setToId(record.getToId());
+        //TODO 群组ID
+        user.setGid(record.getMessageGroup());
+        user.setBusinessType(BusinessTypeEnum.ADD_FRIEND.getCode());
+        user.setIsRead(0);
+        businessMessageMapper.insert(user);
+        user.setMessageId(null);
+        user.setUserId(record.getToId());
+        businessMessageMapper.insert(user);
     }
 
 

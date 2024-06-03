@@ -54,7 +54,7 @@ public class UserController {
      * @return
      */
     @PostMapping("/add/friend")
-    public Result<UserLoginRes> addFriend(@Valid @RequestBody AddFriendReq req) {
+    public Result addFriend(@Valid @RequestBody AddFriendReq req) {
         return userService.addFriend(req);
     }
 

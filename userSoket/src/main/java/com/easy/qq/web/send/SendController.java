@@ -24,6 +24,6 @@ public class SendController {
      */
     @PostMapping("one")
     public Result<Void> sendMsg(@Valid @RequestBody QqFriendChattingRecords record) {
-        return sendService.sendMsg(record);
+        return sendService.sendMsg(record, null);
     }
 }

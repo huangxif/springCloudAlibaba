@@ -165,7 +165,7 @@ public class UserService {
         record.setCreateTime(record.getCreateDate().getTime());
         record.setMessageType(MessageTypeEnum.TEXT_MSG.getType());
         record.setMessageGroup(1);
-        sendService.sendMsg(record);
+        sendService.sendMsg(record, BusinessTypeEnum.FRIEND_MESSAGE);
     }
 
     /**
@@ -311,11 +311,48 @@ public class UserService {
      * @param req
      * @return
      */
-    public Result<UserLoginRes> addFriend(AddFriendReq req) {
-        //1.检验用户是否正常
-        //2.校验是否已经是好友
-        //3.添加好友
-        //
-        return null;
+    public Result addFriend(AddFriendReq req) {
+
+        //1.校验是否已经是好友
+        LambdaQueryChainWrapper<QqFriends> qqFriendsLambda = ChainWrappers.lambdaQueryChain(QqFriends.class);
+        QqFriends one = qqFriendsLambda.eq(QqFriends::getUserId, req.getUserId())
+                .eq(QqFriends::getFriendUserId, req.getFriendUserId())
+                .eq(QqFriends::getFriendType, req.getFriendType()).one();
+        if (one != null) {
+            throw new RuntimeException("已经是好友");
+        }
+
+        //2.检验用户是否正常
+        LambdaQueryChainWrapper<QqUser> qqUserLambda = ChainWrappers.lambdaQueryChain(QqUser.class);
+        QqUser user = qqUserLambda.eq(QqUser::getUid, req.getFriendUserId()).one();
+        if (user == null || user.getUserStatus() != 1) {
+            throw new RuntimeException("用户状态异常");
+        }
+
+        QqFriendChattingRecords record = new QqFriendChattingRecords();
+        record.setToId(req.getFriendUserId());
+        record.setFromId(req.getUserId());
+        record.setChattingText(req.getMessage());
+        record.setMessageType(MessageTypeEnum.TEXT_MSG.getType());
+        record.setMessageGroup(0);
+
+        if (FriendTypeEnum.FRIEND.getCode() == req.getFriendType()) {
+            QqUser friend = qqUserLambda.eq(QqUser::getUid, req.getFriendUserId()).one();
+            if (friend == null || friend.getUserStatus() != 1) {
+                throw new RuntimeException("用户状态异常!");
+            }
+        } else {
+            LambdaQueryChainWrapper<QqFriendGroup> groupLambda = ChainWrappers.lambdaQueryChain(QqFriendGroup.class);
+            QqFriendGroup group = groupLambda.eq(QqFriendGroup::getGid, req.getFriendUserId()).one();
+            //todo 群组状态校验
+            //发送管理员审核
+            LambdaQueryChainWrapper<QqFriendGroupUser> groupUserLambda = ChainWrappers.lambdaQueryChain(QqFriendGroupUser.class);
+            QqFriendGroupUser groupAdmin = groupUserLambda.eq(QqFriendGroupUser::getGid, req.getFriendUserId()).eq(QqFriendGroupUser::getGroupUserGrade, 1).one();
+            record.setMessageGroup(group.getGid());
+            record.setToId(groupAdmin.getUserId());
+        }
+        //3.发送添加好友消息
+        sendService.sendMsg(record, BusinessTypeEnum.ADD_FRIEND);
+        return new Result(true, "发送成功", "200", null);
     }
 }
