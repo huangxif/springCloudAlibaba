@@ -34,10 +34,5 @@ public class UserLoginReq extends ReqBase {
      */
     private String password;
 
-    public static void main(String[] args) {
-        UserLoginReq req = new UserLoginReq();
-        req.setSource(1);
-        System.out.println(req);
-    }
 
 }

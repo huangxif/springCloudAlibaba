@@ -12,7 +12,7 @@
 
     <update id="updateLastFlag">
         update qq_friend_session_chatting_relation
-        set isLast=0
+        set is_Last=0
         where SID in (#{toSessionId}, #{fromSession})
     </update>
 </mapper>

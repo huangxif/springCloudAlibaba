@@ -1,5 +1,7 @@
 package com.easy.qq.web.send.service;
 
+import cn.hutool.core.collection.CollectionUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.conditions.query.LambdaQueryChainWrapper;
 import com.easy.qq.conmon.Result;
 import com.easy.qq.entity.QqFriendChattingRecords;
@@ -8,7 +10,6 @@ import com.easy.qq.entity.QqFriendSessionChattingRelation;
 import com.easy.qq.mapper.QqFriendChattingRecordsMapper;
 import com.easy.qq.mapper.QqFriendSessionChattingRelationMapper;
 import com.easy.qq.mapper.QqFriendSessionMapper;
-import com.easy.qq.web.send.vo.MessageVo;
 import io.netty.channel.Channel;
 import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 import lombok.extern.slf4j.Slf4j;
@@ -16,6 +17,7 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.util.Date;
+import java.util.Map;
 
 @Slf4j
 @Service
@@ -35,13 +37,15 @@ public class SendService {
      * @param record
      */
     public Result<Void> sendMsg(QqFriendChattingRecords record) {
-        sendMessageBefore(record);
+//        sendMessageBefore(record);
         //TODO 单机直接发送,分布式需要借助redis,MQ
-        Channel channel = socketHandler.CONCURRENT_HASH_MAP.get(record.getToId());
-        if (channel == null) {
+        Map<String, Channel> channelMap = socketHandler.CONCURRENT_HASH_MAP.get(record.getToId());
+        if (CollectionUtil.isEmpty(channelMap)) {
             return new Result(true, "发送离线成功", "000000", null);
         }
-        channel.writeAndFlush(new TextWebSocketFrame(record.getChattingText()));
+        channelMap.entrySet().stream().forEach(entry -> {
+            entry.getValue().writeAndFlush(new TextWebSocketFrame(record.getChattingText()));
+        });
         return new Result(true, "发送成功", "000000", null);
     }
 
@@ -93,7 +97,7 @@ public class SendService {
      */
     private QqFriendSession createQqFriendSession(QqFriendChattingRecords record, Integer userId, Integer friendUserId) {
         LambdaQueryChainWrapper<QqFriendSession> sessionMapperLambda = new LambdaQueryChainWrapper(sessionMapper);
-        QqFriendSession friendSession = sessionMapperLambda.eq(QqFriendSession::getUserId, userId).eq(QqFriendSession::getFriendUserId, friendUserId).getEntity();
+        QqFriendSession friendSession = sessionMapperLambda.eq(QqFriendSession::getUserId, userId).eq(QqFriendSession::getFriendUserId, friendUserId).one();
         //不存在建立
         if (friendSession == null) {
             friendSession = new QqFriendSession(null, userId, friendUserId, record.getMessageGroup(), 1, new Date(), new Date());

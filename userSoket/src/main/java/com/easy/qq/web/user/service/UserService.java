@@ -1,22 +1,29 @@
 package com.easy.qq.web.user.service;
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.jwt.JWT;
+import cn.hutool.jwt.JWTPayload;
 import cn.hutool.jwt.JWTUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.extension.conditions.query.LambdaQueryChainWrapper;
+import com.baomidou.mybatisplus.extension.toolkit.ChainWrappers;
 import com.easy.qq.conmon.Result;
 import com.easy.qq.conmon.enums.*;
 import com.easy.qq.conmon.utils.RedisCacheUtil;
+import com.easy.qq.conmon.utils.StringUtil;
 import com.easy.qq.entity.*;
 import com.easy.qq.mapper.*;
 import com.easy.qq.web.send.service.SendService;
+import com.easy.qq.web.user.req.AddFriendReq;
 import com.easy.qq.web.user.req.UserLoginReq;
-import com.easy.qq.web.user.req.UserVo;
+import com.easy.qq.web.user.req.UserRegisterReq;
 import com.easy.qq.web.user.res.UserLoginRes;
 import com.easy.qq.web.user.vo.QqFriendSessionVo;
 import com.easy.qq.web.user.vo.QqFriendsTypeVo;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.nio.charset.StandardCharsets;
@@ -81,16 +88,28 @@ public class UserService {
     /**
      * 注册用户
      *
-     * @param user
+     * @param req
      * @return
      */
-    public Result<UserVo> registerUser(UserVo user) {
+    @Transactional(rollbackFor = Exception.class)
+    public Result<UserRegisterReq> registerUser(UserRegisterReq req) {
         //1.查询是否存在
-        LambdaQueryChainWrapper<QqUser> userLambdaQuery = new LambdaQueryChainWrapper(qqUserMapper);
-        List<QqUser> users = userLambdaQuery.eq(QqUser::getPhone, user.getPhone()).or().eq(QqUser::getEmai, user.getEmai()).list();
+        LambdaQueryChainWrapper<QqUser> userLambdaQuery = ChainWrappers.lambdaQueryChain(QqUser.class);
+        List<QqUser> users = userLambdaQuery.eq(QqUser::getPhone, req.getPhone()).or().eq(QqUser::getEmai, req.getEmai()).list();
         if (CollectionUtil.isNotEmpty(users)) {
             throw new RuntimeException("该手机号或者邮箱已经注册");
         }
+        QqUser user = new QqUser();
+
+        BeanUtil.copyProperties(req, user);
+        if (user.getSex() == null) {
+            user.setSex(0);
+        }
+        if (StringUtil.isEmpty(user.getPassword())) {
+            user.setPassword("pass@" + user.getPhone().substring(6));
+        }
+        //todo 枚举
+        user.setUserStatus(1);
         //2.保存用户表
         user.setCreateTime(new Date());
         user.setUpdateTime(user.getCreateTime());
@@ -135,7 +154,7 @@ public class UserService {
      *
      * @return
      */
-    private void sendRobotMessage(UserVo vo) {
+    private void sendRobotMessage(QqUser vo) {
         //1.发送欢迎消息
         QqFriendChattingRecords record = new QqFriendChattingRecords();
         record.setToId(vo.getUid());
@@ -165,16 +184,17 @@ public class UserService {
         res.setQqFriendsTypeList(getQqFriendsType(user.getUid()));
         //TODO 个人设置详情
         //查询群聊
-        LambdaQueryChainWrapper<QqFriends> lambdaQuery = new LambdaQueryChainWrapper(qqFriendsMapper);
+        LambdaQueryChainWrapper<QqFriends> lambdaQuery = ChainWrappers.lambdaQueryChain(QqFriends.class);
         List<QqFriends> qqFriends = lambdaQuery.eq(QqFriends::getUserId, user.getUid()).eq(QqFriends::getFriendType, FriendTypeEnum.GROUP.getCode()).orderByDesc(QqFriends::getFid).list();
         res.setGroupFriends(qqFriends);
         JSONObject tokenMap = new JSONObject();
-        tokenMap.put("userId", user.getUid());
-        tokenMap.put("source", req.getSource());
+        tokenMap.put("userId", user.getUid() + "");
+        tokenMap.put("source", req.getSource() + "");
         //生成token
-        res.setToken(getToken(tokenMap));
+        res.setToken(getJwtToken(tokenMap));
         WebSourceEnum sourceEnum = WebSourceEnum.getByValue(req.getSource());
         redisCacheUtil.set(LOGIN_TOKEN_REDIS_KEY + "_" + sourceEnum.getCode() + "_" + user.getUid(), res.getToken(), LOGIN_TOKEN_REDIS_KEY_TIME);
+        //todo 校验请求端来源是否重复登录
         redisCacheUtil.set(LOGIN_TOKEN_REDIS_KEY + "_" + sourceEnum.getCode() + "_" + res.getToken(), user.getUid(), LOGIN_TOKEN_REDIS_KEY_TIME);
         return new Result(true, "登录成功", "200", res);
     }
@@ -185,7 +205,7 @@ public class UserService {
      * @param map
      * @return
      */
-    public static String getToken(JSONObject map) {
+    public static String getJwtToken(JSONObject map) {
         String str = JWTUtil.createToken(map, TOKEN_KEY.getBytes(StandardCharsets.UTF_8));
         return str;
 //        JWT jwt = JWTUtil.parseToken(str);
@@ -193,12 +213,34 @@ public class UserService {
     }
 
     /**
+     * 获取token
+     *
+     * @param token
+     * @return
+     */
+    public static JWTPayload decodeJwtToken(String token) {
+        try {
+            JWT jwt = JWTUtil.parseToken(token);
+            JWTPayload payload = jwt.getPayload();
+            if (payload == null) {
+                throw new RuntimeException("token有误");
+            }
+            return payload;
+        } catch (Exception e) {
+            log.error("decodeJwtToken,jwtToken解析异常", e);
+            throw new RuntimeException("token解析异常");
+        }
+
+    }
+
+
+    /**
      * 查询联系人
      *
      * @param uid
      */
     private List<QqFriendsTypeVo> getQqFriendsType(Integer uid) {
-        LambdaQueryChainWrapper<QqFriends> lambdaQuery = new LambdaQueryChainWrapper(qqFriendsMapper);
+        LambdaQueryChainWrapper<QqFriends> lambdaQuery = ChainWrappers.lambdaQueryChain(QqFriends.class);
         List<QqFriendsTypeVo> vo = friendsTypeMapper.getQqFriendsType(uid);
 
         vo.stream().filter(typeVo -> typeVo.getFriendNum() > 0).forEach(typeVo -> {
@@ -218,11 +260,11 @@ public class UserService {
         LambdaQueryChainWrapper<QqUser> lambdaQuery = new LambdaQueryChainWrapper(qqUserMapper);
         QqUser user;
         if (LoginTypeEnum.ACCOUNT_PASSWORD.getType() == req.getLoginType()) {
-            user = lambdaQuery.eq(QqUser::getUid, req.getUserId()).getEntity();
+            user = lambdaQuery.eq(QqUser::getUid, req.getUserId()).one();
         } else if (LoginTypeEnum.PHONE_CODE.getType() == req.getLoginType()) {
-            user = lambdaQuery.eq(QqUser::getPhone, req.getPhone()).getEntity();
+            user = lambdaQuery.eq(QqUser::getPhone, req.getPhone()).one();
         } else if (LoginTypeEnum.EMAI_CODE.getType() == req.getLoginType()) {
-            user = lambdaQuery.eq(QqUser::getEmai, req.getEmai()).getEntity();
+            user = lambdaQuery.eq(QqUser::getEmai, req.getEmai()).one();
         } else {
             throw new RuntimeException("不支持的登陆方式");
         }
@@ -245,13 +287,13 @@ public class UserService {
         }
         vo.forEach(item -> {
             //查询好友信息
-            item.setFriend(friendsLambdaQuery.eq(QqFriends::getUserId, userId).eq(QqFriends::getFriendUserId, item.getFriendUserId()).getEntity());
+            item.setFriend(friendsLambdaQuery.eq(QqFriends::getUserId, userId).eq(QqFriends::getFriendUserId, item.getFriendUserId()).one());
 
             //查询好友具体信息
             if (FriendTypeEnum.FRIEND.getCode() == item.getSessionType()) {
-                item.setFriendUser(userLambdaQuery.eq(QqUser::getUid, item.getFriendUserId()).getEntity());
+                item.setFriendUser(userLambdaQuery.eq(QqUser::getUid, item.getFriendUserId()).one());
             } else {
-                item.setGroup(groupLambdaQuery.eq(QqFriendGroup::getGid, item.getFriendUserId()).getEntity());
+                item.setGroup(groupLambdaQuery.eq(QqFriendGroup::getGid, item.getFriendUserId()).one());
             }
             //查询消息记录
             item.setMessageList(chattingRecordsMapper.getChattingRecords(null, item.getSid(), MESSAGE_LIMIT));
@@ -260,6 +302,20 @@ public class UserService {
             }
 
         });
+        return null;
+    }
+
+    /**
+     * 添加好友
+     *
+     * @param req
+     * @return
+     */
+    public Result<UserLoginRes> addFriend(AddFriendReq req) {
+        //1.检验用户是否正常
+        //2.校验是否已经是好友
+        //3.添加好友
+        //
         return null;
     }
 }

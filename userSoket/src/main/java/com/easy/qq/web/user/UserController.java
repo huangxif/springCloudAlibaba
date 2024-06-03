@@ -1,10 +1,11 @@
 package com.easy.qq.web.user;
 
 import com.easy.qq.conmon.Result;
+import com.easy.qq.web.user.req.AddFriendReq;
 import com.easy.qq.web.user.req.UserLoginReq;
+import com.easy.qq.web.user.req.UserRegisterReq;
 import com.easy.qq.web.user.res.UserLoginRes;
 import com.easy.qq.web.user.service.UserService;
-import com.easy.qq.web.user.req.UserVo;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -30,7 +31,7 @@ public class UserController {
      * @return
      */
     @PostMapping("/register")
-    public Result<UserVo> registerUser(UserVo user) {
+    public Result<UserRegisterReq> registerUser(@Valid @RequestBody UserRegisterReq user) {
         return userService.registerUser(user);
     }
 
@@ -44,4 +45,18 @@ public class UserController {
     public Result<UserLoginRes> userLogin(@Valid @RequestBody UserLoginReq req) {
         return userService.userLogin(req);
     }
+
+
+    /**
+     * 添加好友
+     *
+     * @param req
+     * @return
+     */
+    @PostMapping("/add/friend")
+    public Result<UserLoginRes> addFriend(@Valid @RequestBody AddFriendReq req) {
+        return userService.addFriend(req);
+    }
+
+
 }

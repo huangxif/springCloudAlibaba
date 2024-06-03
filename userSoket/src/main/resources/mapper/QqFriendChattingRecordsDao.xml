@@ -24,7 +24,7 @@
         <if test="cid !=null ">
             and r.cid>#{cid}
         </if>
-        order r.CRID desc limit #{messageLimit}
+        order by r.CRID desc limit #{messageLimit}
     </select>
 
 </mapper>
