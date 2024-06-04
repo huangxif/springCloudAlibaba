@@ -13,7 +13,11 @@ public class QqFriendsTypeVo {
     /**
      * 主键ID
      */
-    private Integer tid;
+    private Integer typeId;
+    /**
+     * 用户ID
+     */
+    private Integer userId;
     /**
      * 分组名称
      */
@@ -23,14 +27,21 @@ public class QqFriendsTypeVo {
      */
     private Date createTime;
     /**
-     * 关系ID
+     * 修改时间
      */
-    private Integer rid;
-
+    private Date updateTime;
     /**
-     * 用户ID
+     * 排序
      */
-    private Integer userId;
+    private Integer typeOrder;
+    /**
+     * 是否隐藏:0:不展示,1:展示
+     */
+    private Integer isShow;
+    /**
+     * 是否隐藏:0:系统创建,1:用户创建
+     */
+    private Integer isSys;
 
     /**
      * 好友数量

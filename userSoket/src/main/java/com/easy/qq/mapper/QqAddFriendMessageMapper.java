@@ -1,7 +1,7 @@
 package com.easy.qq.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.easy.qq.entity.QqBusinessMessage;
+import com.easy.qq.entity.QqAddFriendMessage;
 
 /**
  * 业务消息记录表(QqBusinessMessage)表数据库访问层
@@ -9,7 +9,7 @@ import com.easy.qq.entity.QqBusinessMessage;
  * @author makejava
  * @since 2024-06-03 22:20:59
  */
-public interface QqBusinessMessageMapper extends BaseMapper<QqBusinessMessage> {
+public interface QqAddFriendMessageMapper extends BaseMapper<QqAddFriendMessage> {
 
 
 }

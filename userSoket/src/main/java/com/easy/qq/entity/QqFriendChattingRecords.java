@@ -56,9 +56,9 @@ public class QqFriendChattingRecords implements Serializable {
      */
     private String messageExe;
     /**
-     * 是否群聊消息:1好友消息,2群聊消息
+     * 群组ID:0:表示普通消息，其他为群组ID
      */
-    private Integer messageGroup;
+    private Integer groupId;
     /**
      * 0无艾特,1艾特
      */

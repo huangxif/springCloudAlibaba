@@ -1,5 +1,7 @@
 package com.easy.qq.web.send.vo;
 
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.serializer.SerializerFeature;
 import lombok.Data;
 
 import java.io.Serializable;
@@ -13,12 +15,12 @@ public class MessageVo<T> implements Serializable {
     /**
      * 接收人
      */
-    private String to;
+    private Integer to;
 
     /**
      * 发送人
      */
-    private String send;
+    private Integer send;
 
     /**
      * 消息类型
@@ -30,4 +32,8 @@ public class MessageVo<T> implements Serializable {
      */
     private T data;
 
+    @Override
+    public String toString() {
+        return JSON.toJSONString(this, SerializerFeature.WriteMapNullValue);
+    }
 }

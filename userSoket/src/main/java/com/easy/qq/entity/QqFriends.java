@@ -42,9 +42,9 @@ public class QqFriends implements Serializable {
     /**
      * 好友分组ID
      */
-    private Integer rid;
+    private Integer typeId;
     /**
-     * 好友类型：1好友,2群聊
+     * 好友类型：0好友,1群聊
      */
     private Integer friendType;
     /**

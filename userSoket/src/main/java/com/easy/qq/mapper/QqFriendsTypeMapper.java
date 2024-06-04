@@ -16,10 +16,11 @@ import java.util.List;
 public interface QqFriendsTypeMapper extends BaseMapper<QqFriendsType> {
 
     /**
-     * 查询
+     * 查询好友分组
+     *
      * @param uid
      * @return
      */
-    List<QqFriendsTypeVo> getQqFriendsType(@Param("uid") Integer uid);
+    List<QqFriendsTypeVo> getFriendsType(@Param("uid") Integer uid);
 }
 

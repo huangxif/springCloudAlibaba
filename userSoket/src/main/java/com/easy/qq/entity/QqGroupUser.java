@@ -20,7 +20,7 @@ import java.io.Serializable;
 @AllArgsConstructor
 @NoArgsConstructor
 @TableName("QQ_FRIEND_GROUP_USER")
-public class QqFriendGroupUser implements Serializable {
+public class QqGroupUser implements Serializable {
     private static final long serialVersionUID = -51247944217632999L;
     /**
      * 主键ID

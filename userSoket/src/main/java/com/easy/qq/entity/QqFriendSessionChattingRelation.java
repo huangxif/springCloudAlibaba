@@ -34,14 +34,12 @@ public class QqFriendSessionChattingRelation implements Serializable {
      * 会话ID
      */
     private Integer sid;
-
     /**
      * 是否最后1条:0,不是最后1条，1是最后1条
      */
     private Integer isLast;
-
     /**
-     * 是否未读:是否未读:0未读，1已读,2撤回
+     * 是否未读:0未读，1已读,2撤回
      */
     private Integer isRead;
 

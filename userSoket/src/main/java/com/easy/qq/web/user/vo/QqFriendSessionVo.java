@@ -2,7 +2,7 @@ package com.easy.qq.web.user.vo;
 
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
-import com.easy.qq.entity.QqFriendGroup;
+import com.easy.qq.entity.QqGroup;
 import com.easy.qq.entity.QqFriends;
 import com.easy.qq.entity.QqUser;
 import lombok.Data;
@@ -58,7 +58,7 @@ public class QqFriendSessionVo {
     /**
      * 好友用户信息
      */
-    private QqFriendGroup group;
+    private QqGroup group;
 
     /**
      * 消息列表

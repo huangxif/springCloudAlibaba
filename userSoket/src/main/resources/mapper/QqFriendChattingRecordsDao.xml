@@ -2,19 +2,7 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.easy.qq.mapper.QqFriendChattingRecordsMapper">
 
-    <resultMap type="com.easy.qq.entity.QqFriendChattingRecords" id="QqFriendChattingRecordsMap">
-        <result property="cid" column="CID" jdbcType="INTEGER"/>
-        <result property="toId" column="TO_ID" jdbcType="INTEGER"/>
-        <result property="fromId" column="FROM_ID" jdbcType="INTEGER"/>
-        <result property="chattingText" column="CHATTING_TEXT" jdbcType="VARCHAR"/>
-        <result property="createTime" column="CREATE_TIME" jdbcType="INTEGER"/>
-        <result property="createDate" column="CREATE_DATE" jdbcType="TIMESTAMP"/>
-        <result property="messageType" column="MESSAGE_TYPE" jdbcType="INTEGER"/>
-        <result property="messageExe" column="MESSAGE_EXE" jdbcType="VARCHAR"/>
-        <result property="messageGroup" column="MESSAGE_GROUP" jdbcType="INTEGER"/>
-        <result property="messageAt" column="MESSAGE_AT" jdbcType="INTEGER"/>
-        <result property="messageAtId" column="MESSAGE_AT_ID" jdbcType="INTEGER"/>
-    </resultMap>
+
 
     <select id="getChattingRecords" resultType="com.easy.qq.web.user.vo.ChattingRecordsVo">
         select *

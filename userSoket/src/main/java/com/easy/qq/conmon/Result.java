@@ -26,4 +26,11 @@ public class Result<T> {
     private T data;
 
 
+    public Result(boolean success, String message, String code) {
+        this.success = success;
+        this.message = message;
+        this.code = code;
+    }
+
+
 }

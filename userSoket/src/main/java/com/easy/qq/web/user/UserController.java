@@ -2,6 +2,7 @@ package com.easy.qq.web.user;
 
 import com.easy.qq.conmon.Result;
 import com.easy.qq.web.user.req.AddFriendReq;
+import com.easy.qq.web.user.req.DealWithAddFriendReq;
 import com.easy.qq.web.user.req.UserLoginReq;
 import com.easy.qq.web.user.req.UserRegisterReq;
 import com.easy.qq.web.user.res.UserLoginRes;
@@ -59,4 +60,25 @@ public class UserController {
     }
 
 
+    /**
+     * 处理添加好友请求
+     *
+     * @param req
+     * @return
+     */
+    @PostMapping("/dealWith/add/friend")
+    public Result dealWithAddFriend(@Valid @RequestBody DealWithAddFriendReq req) {
+        return userService.dealWithAddFriend(req);
+    }
+
+//    /**
+//     * 添加好友
+//     *
+//     * @param req
+//     * @return
+//     */
+//    @PostMapping("/add/friend")
+//    public Result addFriend(@Valid @RequestBody AddFriendReq req) {
+//        return userService.addFriend(req);
+//    }
 }

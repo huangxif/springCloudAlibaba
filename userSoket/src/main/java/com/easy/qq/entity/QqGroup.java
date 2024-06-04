@@ -7,11 +7,11 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.Date;
 import java.io.Serializable;
+import java.util.Date;
 
 /**
- * 群组表(QqFriendGroup)实体类
+ * 群组表(QqGroup)实体类
  *
  * @author makejava
  * @since 2024-05-13 15:01:24
@@ -19,8 +19,8 @@ import java.io.Serializable;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-@TableName("QQ_FRIEND_GROUP")
-public class QqFriendGroup implements Serializable {
+@TableName("QQ_GROUP")
+public class QqGroup implements Serializable {
     private static final long serialVersionUID = -50956011659670050L;
     /**
      * 主键ID
@@ -47,7 +47,9 @@ public class QqFriendGroup implements Serializable {
      * 创建时间
      */
     private Date groupCreateDate;
-
-
+    /**
+     * 修改时间
+     */
+    private Date groupUpdateDate;
 }
 

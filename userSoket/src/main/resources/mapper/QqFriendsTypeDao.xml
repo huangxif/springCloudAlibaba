@@ -2,28 +2,12 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.easy.qq.mapper.QqFriendsTypeMapper">
 
-    <resultMap type="com.easy.qq.entity.QqFriendsType" id="QqFriendsTypeMap">
-        <result property="tid" column="TID" jdbcType="INTEGER"/>
-        <result property="typeName" column="TYPE_NAME" jdbcType="VARCHAR"/>
-        <result property="createTime" column="CREATE_TIME" jdbcType="TIMESTAMP"/>
-    </resultMap>
-
-    <select id="getQqFriendsType" parameterType="com.easy.qq.web.user.vo.QqFriendsTypeVo">
-        SELECT
-            t.*,
-            count(1) as friendNum,
-            f.RID,
-            f.USER_ID
-        FROM
-            `qq_friends` f
-                LEFT JOIN qq_friends_type_relation r ON r.RID = f.RID
-                LEFT JOIN qq_friends_type t ON t.TID = r.TID
-        where f.USER_ID=#{uid}
-        GROUP BY
-            f.RID
-        ORDER BY
-            f.rid
+    <select id="getFriendsType" resultType="com.easy.qq.web.user.vo.QqFriendsTypeVo">
+        select *
+        from qq_friends_type
+        where USER_ID = #{uid} order by TYPE_ORDER
     </select>
+
 
 </mapper>
 

@@ -36,7 +36,7 @@ public class QqFriendSession implements Serializable {
      */
     private Integer friendUserId;
     /**
-     * 是否群组:1:不是,2是
+     * 是否群组:0:不是,1是
      */
     private Integer sessionType;
     /**

@@ -4,14 +4,15 @@ import cn.hutool.core.collection.CollectionUtil;
 import com.baomidou.mybatisplus.extension.conditions.query.LambdaQueryChainWrapper;
 import com.easy.qq.conmon.Result;
 import com.easy.qq.conmon.enums.BusinessTypeEnum;
-import com.easy.qq.entity.QqBusinessMessage;
+import com.easy.qq.entity.QqAddFriendMessage;
 import com.easy.qq.entity.QqFriendChattingRecords;
 import com.easy.qq.entity.QqFriendSession;
 import com.easy.qq.entity.QqFriendSessionChattingRelation;
-import com.easy.qq.mapper.QqBusinessMessageMapper;
+import com.easy.qq.mapper.QqAddFriendMessageMapper;
 import com.easy.qq.mapper.QqFriendChattingRecordsMapper;
 import com.easy.qq.mapper.QqFriendSessionChattingRelationMapper;
 import com.easy.qq.mapper.QqFriendSessionMapper;
+import com.easy.qq.web.send.vo.MessageVo;
 import io.netty.channel.Channel;
 import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 import lombok.extern.slf4j.Slf4j;
@@ -33,7 +34,7 @@ public class SendService {
     @Resource
     private QqFriendSessionChattingRelationMapper chattingRelationMapper;
     @Resource
-    private QqBusinessMessageMapper businessMessageMapper;
+    private QqAddFriendMessageMapper businessMessageMapper;
 
     /**
      * 发送单人消息
@@ -44,9 +45,11 @@ public class SendService {
         if (businessType == null || businessType.equals(BusinessTypeEnum.FRIEND_MESSAGE)) {
             sendMessageBefore(record);
         }
-        if (businessType.equals(BusinessTypeEnum.ADD_FRIEND)) {
-            sendAddFriendMessageBefore(record);
-        }
+        MessageVo<String> messageVo=new MessageVo<>();
+        messageVo.setSend(record.getFromId());
+        messageVo.setTo(record.getToId());
+        messageVo.setType(businessType.getCode());
+        messageVo.setData(record.getChattingText());
 
         //TODO 单机直接发送,分布式需要借助redis,MQ
         Map<String, Channel> channelMap = socketHandler.CONCURRENT_HASH_MAP.get(record.getToId());
@@ -54,30 +57,12 @@ public class SendService {
             return new Result(true, "发送离线成功", "000000", null);
         }
         channelMap.entrySet().stream().forEach(entry -> {
-            entry.getValue().writeAndFlush(new TextWebSocketFrame(record.getChattingText()));
+            entry.getValue().writeAndFlush(new TextWebSocketFrame(messageVo.toString()));
         });
         return new Result(true, "发送成功", "000000", null);
     }
 
-    /**
-     * 发送添加好友信息之前
-     */
-    private void sendAddFriendMessageBefore(QqFriendChattingRecords record) {
-        QqBusinessMessage user = new QqBusinessMessage();
-        user.setCreateTime(new Date());
-        user.setUpdateTime(user.getCreateTime());
-        user.setMessage(record.getChattingText());
-        user.setFromId(record.getFromId());
-        user.setToId(record.getToId());
-        //TODO 群组ID
-        user.setGid(record.getMessageGroup());
-        user.setBusinessType(BusinessTypeEnum.ADD_FRIEND.getCode());
-        user.setIsRead(0);
-        businessMessageMapper.insert(user);
-        user.setMessageId(null);
-        user.setUserId(record.getToId());
-        businessMessageMapper.insert(user);
-    }
+
 
 
     /**

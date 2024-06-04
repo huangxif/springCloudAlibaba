@@ -7,8 +7,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.Date;
 import java.io.Serializable;
+import java.util.Date;
 
 /**
  * 好友分组表(QqFriendsType)实体类
@@ -26,7 +26,11 @@ public class QqFriendsType implements Serializable {
      * 主键ID
      */
     @TableId(type = IdType.AUTO)
-    private Integer tid;
+    private Integer typeId;
+    /**
+     * 用户ID
+     */
+    private Integer userId;
     /**
      * 分组名称
      */
@@ -35,9 +39,21 @@ public class QqFriendsType implements Serializable {
      * 添加时间
      */
     private Date createTime;
-
-
-
-
+    /**
+     * 修改时间
+     */
+    private Date updateTime;
+    /**
+     * 排序
+     */
+    private Integer typeOrder;
+    /**
+     * 是否隐藏:0:不展示,1:展示
+     */
+    private Integer isShow;
+    /**
+     * 是否隐藏:0:系统创建,1:用户创建
+     */
+    private Integer isSys;
 }
 
