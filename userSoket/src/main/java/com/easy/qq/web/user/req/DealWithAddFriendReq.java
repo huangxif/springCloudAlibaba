@@ -20,23 +20,33 @@ public class DealWithAddFriendReq extends ReqBase {
     @NotNull(message = "messageId不可为空")
     private Integer messageId;
     /**
-     * 处理结果:0:拒绝，1:同意
+     * 处理结果:1:拒绝，2:同意
      */
     @NotNull
-    @Min(value = 0, message = "dealWith参数有误")
-    @Max(value = 1, message = "dealWith参数有误")
+    @Min(value = 1, message = "dealWith参数有误")
+    @Max(value = 2, message = "dealWith参数有误")
     private Integer dealWith;
-
-    /**
-     * 好友分组ID
-     */
-    @NotNull
-    @Min(value = 0, message = "dealWith参数有误")
-    private Integer rid;
-
 
     /**
      * 昵称
      */
     private String friendNickName;
+
+
+    /**
+     * 用户ID
+     */
+    @NotNull(message = "用户ID不可为空")
+    private Integer userId;
+
+    /**
+     * 分组主键ID:0为新增，非0为已有
+     */
+    @NotNull(message = "分组主键ID不可为空")
+    @Min(value = 0, message = "typeId参数有误")
+    private Integer typeId;
+    /**
+     * 分组名称
+     */
+    private String typeName;
 }

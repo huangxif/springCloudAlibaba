@@ -1,10 +1,11 @@
 package com.easy.qq.web.send.service;
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollectionUtil;
 import com.baomidou.mybatisplus.extension.conditions.query.LambdaQueryChainWrapper;
 import com.easy.qq.conmon.Result;
 import com.easy.qq.conmon.enums.BusinessTypeEnum;
-import com.easy.qq.entity.QqAddFriendMessage;
+import com.easy.qq.conmon.enums.FriendTypeEnum;
 import com.easy.qq.entity.QqFriendChattingRecords;
 import com.easy.qq.entity.QqFriendSession;
 import com.easy.qq.entity.QqFriendSessionChattingRelation;
@@ -13,6 +14,7 @@ import com.easy.qq.mapper.QqFriendChattingRecordsMapper;
 import com.easy.qq.mapper.QqFriendSessionChattingRelationMapper;
 import com.easy.qq.mapper.QqFriendSessionMapper;
 import com.easy.qq.web.send.vo.MessageVo;
+import com.easy.qq.web.user.vo.ChattingRecordsVo;
 import io.netty.channel.Channel;
 import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 import lombok.extern.slf4j.Slf4j;
@@ -42,35 +44,38 @@ public class SendService {
      * @param record
      */
     public Result<Void> sendMsg(QqFriendChattingRecords record, BusinessTypeEnum businessType) {
-        if (businessType == null || businessType.equals(BusinessTypeEnum.FRIEND_MESSAGE)) {
-            sendMessageBefore(record);
+        if (!businessType.equals(BusinessTypeEnum.FRIEND_MESSAGE)) {
+            return null;
         }
-        MessageVo<String> messageVo=new MessageVo<>();
-        messageVo.setSend(record.getFromId());
-        messageVo.setTo(record.getToId());
+        ChattingRecordsVo vo = sendMessageBefore(record);
+        MessageVo messageVo = new MessageVo<>();
+        messageVo.setMsgId(vo.getCrid());
+        messageVo.setSend(vo.getFromId());
+        messageVo.setTo(vo.getToId());
         messageVo.setType(businessType.getCode());
-        messageVo.setData(record.getChattingText());
-
-        //TODO 单机直接发送,分布式需要借助redis,MQ
-        Map<String, Channel> channelMap = socketHandler.CONCURRENT_HASH_MAP.get(record.getToId());
-        if (CollectionUtil.isEmpty(channelMap)) {
-            return new Result(true, "发送离线成功", "000000", null);
-        }
-        channelMap.entrySet().stream().forEach(entry -> {
-            entry.getValue().writeAndFlush(new TextWebSocketFrame(messageVo.toString()));
-        });
-        return new Result(true, "发送成功", "000000", null);
+        messageVo.setData(vo);
+        return sendMsg(messageVo);
     }
 
-
-
+    private Result<Void> sendMsg(MessageVo message) {
+        //TODO 单机直接发送,分布式需要借助redis,MQ
+        Map<String, Channel> channelMap = socketHandler.CONCURRENT_HASH_MAP.get(message.getTo());
+        if (CollectionUtil.isEmpty(channelMap)) {
+            return new Result(true, "发送离线成功", "000000");
+        }
+        String str = message.toString();
+        channelMap.entrySet().stream().forEach(entry -> {
+            entry.getValue().writeAndFlush(new TextWebSocketFrame(str));
+        });
+        return new Result(true, "发送成功", "000000");
+    }
 
     /**
      * 发送消息
      *
      * @return
      */
-    private void sendMessageBefore(QqFriendChattingRecords record) {
+    private ChattingRecordsVo sendMessageBefore(QqFriendChattingRecords record) {
         //TODO 建立会话前校验是否可以发送消息：是否删除好友，黑名单，拒
         //1.双方建立会话
         //1.1 获取接受方会话
@@ -81,7 +86,11 @@ public class SendService {
         record.setCreateDate(new Date());
         record.setCreateTime(record.getCreateDate().getTime());
         chattingRecordsMapper.insert(record);
-        createSessionChattingRelation(record, toSession.getSid(), fromSession.getSid());
+        QqFriendSessionChattingRelation relation = createSessionChattingRelation(record, toSession.getSid(), fromSession.getSid());
+        ChattingRecordsVo vo = new ChattingRecordsVo();
+        BeanUtil.copyProperties(relation, vo);
+        BeanUtil.copyProperties(record, vo);
+        return vo;
     }
 
     /**
@@ -91,15 +100,16 @@ public class SendService {
      * @param toSessionId
      * @param fromSession
      */
-    private void createSessionChattingRelation(QqFriendChattingRecords record, Integer toSessionId, Integer fromSession) {
+    private QqFriendSessionChattingRelation createSessionChattingRelation(QqFriendChattingRecords record, Integer toSessionId, Integer fromSession) {
         //消息关联到会话
         QqFriendSessionChattingRelation toRelation = new QqFriendSessionChattingRelation(null, record.getCid(), toSessionId, 1, 0);
         QqFriendSessionChattingRelation fromRelation = new QqFriendSessionChattingRelation(null, record.getCid(), fromSession, 1, 1);
         //更新最后一条消息标志
         int i = chattingRelationMapper.updateLastFlag(toSessionId, fromSession);
-        //更新关系
-        chattingRelationMapper.insert(toRelation);
         chattingRelationMapper.insert(fromRelation);
+        //更新关系
+        return toRelation;
+
     }
 
     /**
@@ -115,7 +125,7 @@ public class SendService {
         QqFriendSession friendSession = sessionMapperLambda.eq(QqFriendSession::getUserId, userId).eq(QqFriendSession::getFriendUserId, friendUserId).one();
         //不存在建立
         if (friendSession == null) {
-            friendSession = new QqFriendSession(null, userId, friendUserId, record.getMessageGroup(), 1, new Date(), new Date());
+            friendSession = new QqFriendSession(null, userId, friendUserId, record.getGroupId() == 0 ? FriendTypeEnum.FRIEND.getCode() : FriendTypeEnum.GROUP.getCode(), 1, new Date(), new Date());
             sessionMapper.insert(friendSession);
         } else if (friendSession.getSessionStatus() == 2) {
             //隐藏会话设置为显示

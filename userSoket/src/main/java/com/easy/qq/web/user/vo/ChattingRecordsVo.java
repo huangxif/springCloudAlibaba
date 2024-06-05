@@ -1,7 +1,11 @@
 package com.easy.qq.web.user.vo;
 
 import com.easy.qq.entity.QqFriendChattingRecords;
+import lombok.Data;
+import lombok.ToString;
 
+@Data
+@ToString(callSuper = true)
 public class ChattingRecordsVo extends QqFriendChattingRecords {
     private static final long serialVersionUID = 5128967271191956294L;
 

@@ -56,6 +56,10 @@ public class QqAddFriendMessage implements Serializable {
      */
     private Integer isRead;
     /**
+     * 处理结果:0:未处理,1:拒绝，2:同意
+     */
+    private Integer dealWith;
+    /**
      * 添加时间
      */
     private Date createTime;

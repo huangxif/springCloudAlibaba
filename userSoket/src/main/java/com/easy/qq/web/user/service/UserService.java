@@ -5,8 +5,11 @@ import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.jwt.JWT;
 import cn.hutool.jwt.JWTPayload;
 import cn.hutool.jwt.JWTUtil;
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
+import com.alibaba.fastjson.serializer.SerializerFeature;
 import com.baomidou.mybatisplus.extension.conditions.query.LambdaQueryChainWrapper;
+import com.baomidou.mybatisplus.extension.conditions.update.LambdaUpdateChainWrapper;
 import com.baomidou.mybatisplus.extension.toolkit.ChainWrappers;
 import com.easy.qq.conmon.Result;
 import com.easy.qq.conmon.enums.*;
@@ -333,12 +336,14 @@ public class UserService {
         if (friend == null || friend.getUserStatus() != 1) {
             throw new RuntimeException("用户状态异常!");
         }
-        sendAddFriendMessageBefore(req);
+        QqAddFriendMessage message = sendAddFriendMessageBefore(req);
+        JSONObject msgJson = JSON.parseObject(JSON.toJSONString(message, SerializerFeature.WriteMapNullValue));
+        msgJson.put("userNickName", user.getUserNickName());
         //3.发送添加好友消息
         QqFriendChattingRecords record = new QqFriendChattingRecords();
         record.setToId(req.getFriendUserId());
         record.setFromId(req.getUserId());
-        record.setChattingText(req.getMessage());
+        record.setChattingText(msgJson.toString(SerializerFeature.WriteMapNullValue));
         record.setMessageType(MessageTypeEnum.TEXT_MSG.getType());
         sendService.sendMsg(record, BusinessTypeEnum.ADD_FRIEND);
         return new Result(true, "发送成功", "200", null);
@@ -347,27 +352,36 @@ public class UserService {
     /**
      * 发送添加好友信息之前
      */
-    private void sendAddFriendMessageBefore(AddFriendReq req) {
-        QqAddFriendMessage user = new QqAddFriendMessage();
-        BeanUtil.copyProperties(req, user);
-        user.setCreateTime(new Date());
-        user.setUpdateTime(user.getCreateTime());
-        user.setFromId(req.getUserId());
-        user.setIsRead(0);
-        user.setUserId(req.getFriendUserId());
+    private QqAddFriendMessage sendAddFriendMessageBefore(AddFriendReq req) {
+        QqAddFriendMessage message = new QqAddFriendMessage();
+        BeanUtil.copyProperties(req, message);
+        message.setCreateTime(new Date());
+        message.setUpdateTime(message.getCreateTime());
+        message.setFromId(req.getUserId());
+        message.setIsRead(0);
+        message.setUserId(req.getFriendUserId());
         //新增群组
         if (req.getTypeId() == 0) {
-            QqFriendsType type = new QqFriendsType();
-            type.setTypeName(req.getTypeName());
-            type.setUserId(req.getUserId());
-            type.setCreateTime(new Date());
-            type.setUpdateTime(type.getCreateTime());
-            LambdaQueryChainWrapper<QqFriendsType> typeLambda = ChainWrappers.lambdaQueryChain(QqFriendsType.class);
-            type.setTypeOrder(typeLambda.eq().last());
-            friendsTypeMapper.insert()
+            QqFriendsType type = addNewType(req.getUserId(), req.getTypeName());
+            message.setTypeId(type.getTypeId());
         }
-        addFriendMessageMapper.insert(user);
+        addFriendMessageMapper.insert(message);
+        return message;
     }
+
+    private QqFriendsType addNewType(Integer userId, String typeName) {
+        QqFriendsType type = new QqFriendsType();
+        type.setTypeName(typeName);
+        type.setUserId(userId);
+        type.setCreateTime(new Date());
+        type.setUpdateTime(type.getCreateTime());
+        LambdaQueryChainWrapper<QqFriendsType> typeLambda = ChainWrappers.lambdaQueryChain(QqFriendsType.class);
+        QqFriendsType qqFriendsType = typeLambda.eq(QqFriendsType::getUserId, userId).orderByDesc(QqFriendsType::getTypeOrder).last("limit 1 ").one();
+        type.setTypeOrder(qqFriendsType.getTypeOrder() + 1);
+        friendsTypeMapper.insert(type);
+        return type;
+    }
+
 
     /**
      * 处理添加好友请求
@@ -379,32 +393,37 @@ public class UserService {
     public Result dealWithAddFriend(DealWithAddFriendReq req) {
         LambdaQueryChainWrapper<QqAddFriendMessage> wrapper = ChainWrappers.lambdaQueryChain(QqAddFriendMessage.class);
         QqAddFriendMessage message = wrapper.eq(QqAddFriendMessage::getMessageId, req.getMessageId()).one();
-        if (StringUtil.isNotEmpty(message.getMessageExe())) {
+        if (message.getDealWith() != 0) {
             return new Result(true, "已经处理", "200");
         }
-        message.setMessageExe(req.getDealWith() + "");
-        if (1 == req.getDealWith()) {
+        message.setDealWith(req.getDealWith());
+        message.setUpdateTime(new Date());
+        LambdaUpdateChainWrapper<QqAddFriendMessage> messageWrapper = ChainWrappers.lambdaUpdateChain(QqAddFriendMessage.class);
+        messageWrapper.eq(QqAddFriendMessage::getMessageId, message.getMessageId()).set(QqAddFriendMessage::getDealWith, req.getDealWith()).set(QqAddFriendMessage::getIsRead, 1).set(QqAddFriendMessage::getUpdateTime, new Date());
+        addFriendMessageMapper.update(messageWrapper);
+        //新增群组
+        if (req.getTypeId() == 0) {
+            QqFriendsType type = addNewType(req.getUserId(), req.getTypeName());
+            req.setTypeId(type.getTypeId());
+        }
+        if (2 == req.getDealWith()) {
             //同意添加好友
             LambdaQueryChainWrapper<QqFriends> qqFriendsLambda = ChainWrappers.lambdaQueryChain(QqFriends.class);
-            QqFriends friend = qqFriendsLambda.eq(QqFriends::getUserId, message.getFromId()).eq(QqFriends::getFriendUserId, message.getToId()).eq(QqFriends::getFriendType, FriendTypeEnum.FRIEND.getCode()).one();
+            QqFriends friend = qqFriendsLambda.eq(QqFriends::getUserId, message.getUserId()).eq(QqFriends::getFriendUserId, message.getFromId()).eq(QqFriends::getFriendType, FriendTypeEnum.FRIEND.getCode()).one();
             //不是好友才处理
             if (friend == null) {
-                agreeAddFriend(message);
+                addFriendSave(req.getUserId(), message.getFromId(), req.getTypeId());
             }
-            friend = qqFriendsLambda.eq(QqFriends::getUserId, message.getToId()).eq(QqFriends::getFriendUserId, message.getFromId()).eq(QqFriends::getFriendType, FriendTypeEnum.FRIEND.getCode()).one();
+            friend = qqFriendsLambda.eq(QqFriends::getUserId, message.getFromId()).eq(QqFriends::getFriendUserId, message.getUserId()).eq(QqFriends::getFriendType, FriendTypeEnum.FRIEND.getCode()).one();
             if (friend == null) {
-                friend = new QqFriends();
-                friend.setRid(req.getRid());
-                friend.setFriendUserId(message.getFromId());
-                friend.setFriendNickName(req.getFriendNickName());
-                friend.setFriendType(FriendTypeEnum.FRIEND.getCode());
-                friend.setCreateTime(new Date());
-                friend.setUpdateTime(friend.getCreateTime());
-                friend.setUserId(message.getToId());
-                qqFriendsMapper.insert(friend);
-
-                sendService.sendMsg(null, BusinessTypeEnum.FRIEND_MESSAGE);
+                addFriendSave(message.getFromId(), req.getUserId(), message.getTypeId());
+                QqFriendChattingRecords record = new QqFriendChattingRecords();
+                record.setFromId(message.getFromId());
+                record.setToId(message.getUserId());
+                record.setChattingText(message.getMessage());
+                sendService.sendMsg(record, BusinessTypeEnum.FRIEND_MESSAGE);
             }
+
         } else {
             //拒绝添加
 
@@ -413,16 +432,21 @@ public class UserService {
         return null;
     }
 
-    private void agreeAddFriend(QqAddFriendMessage message) {
-        LambdaQueryChainWrapper<QqFriendsTypeRelation> lambdaQuery = ChainWrappers.lambdaQueryChain(QqFriendsTypeRelation.class);
+    /**
+     * 添加好友
+     *
+     * @param userId
+     * @param friendUserId
+     * @param typeId
+     */
+    private void addFriendSave(Integer userId, Integer friendUserId, Integer typeId) {
         QqFriends qqFriends = new QqFriends();
-        qqFriends.setUserId(message.getFromId());
-        qqFriends.setFriendUserId(message.getToId());
+        qqFriends.setUserId(userId);
+        qqFriends.setFriendUserId(friendUserId);
         qqFriends.setFriendType(FriendTypeEnum.FRIEND.getCode());
         qqFriends.setUpdateTime(new Date());
         qqFriends.setCreateTime(qqFriends.getUpdateTime());
-        QqFriendsTypeRelation relation = lambdaQuery.eq(QqFriendsTypeRelation::getTid, FriendsGrouEnum.MY_FRIEND.getId()).eq(QqFriendsTypeRelation::getUserId, qqFriends.getUserId()).one();
-        qqFriends.setRid(relation.getRid());
+        qqFriends.setTypeId(typeId);
         qqFriendsMapper.insert(qqFriends);
     }
 }

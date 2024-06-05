@@ -13,6 +13,10 @@ import java.io.Serializable;
 public class MessageVo<T> implements Serializable {
     private static final long serialVersionUID = 5881048601971635180L;
     /**
+     * 消息ID
+     */
+    private Integer msgId;
+    /**
      * 接收人
      */
     private Integer to;
