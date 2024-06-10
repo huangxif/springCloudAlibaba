@@ -3,11 +3,19 @@
 <mapper namespace="com.easy.qq.mapper.QqFriendSessionChattingRelationMapper">
 
 
-
     <update id="updateLastFlag">
         update qq_friend_session_chatting_relation
         set is_Last=0
         where SID in (#{toSessionId}, #{fromSession})
+    </update>
+
+    <update id="updateByIds">
+        update qq_friend_session_chatting_relation
+        set IS_READ=0
+        where CRID in
+        <foreach collection="ids" item="id" index="id" open="(" close=")" separator=",">
+            #{id}
+        </foreach>
     </update>
 </mapper>
 

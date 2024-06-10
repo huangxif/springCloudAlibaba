@@ -424,12 +424,8 @@ public class UserService {
                 sendService.sendMsg(record, BusinessTypeEnum.FRIEND_MESSAGE);
             }
 
-        } else {
-            //拒绝添加
-
         }
-
-        return null;
+        return new Result(true, "添加成功", "200");
     }
 
     /**

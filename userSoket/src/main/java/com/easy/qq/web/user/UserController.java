@@ -7,6 +7,7 @@ import com.easy.qq.web.user.req.UserLoginReq;
 import com.easy.qq.web.user.req.UserRegisterReq;
 import com.easy.qq.web.user.res.UserLoginRes;
 import com.easy.qq.web.user.service.UserService;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -67,7 +68,7 @@ public class UserController {
      * @return
      */
     @PostMapping("/dealWith/add/friend")
-    public Result dealWithAddFriend(@Valid @RequestBody DealWithAddFriendReq req) {
+    public Result dealWithAddFriend(@Validated @RequestBody DealWithAddFriendReq req) {
         return userService.dealWithAddFriend(req);
     }
 

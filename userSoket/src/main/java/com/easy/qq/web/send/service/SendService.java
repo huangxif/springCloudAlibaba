@@ -3,17 +3,21 @@ package com.easy.qq.web.send.service;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollectionUtil;
 import com.baomidou.mybatisplus.extension.conditions.query.LambdaQueryChainWrapper;
+import com.baomidou.mybatisplus.extension.toolkit.ChainWrappers;
 import com.easy.qq.conmon.Result;
 import com.easy.qq.conmon.enums.BusinessTypeEnum;
 import com.easy.qq.conmon.enums.FriendTypeEnum;
 import com.easy.qq.entity.QqFriendChattingRecords;
 import com.easy.qq.entity.QqFriendSession;
 import com.easy.qq.entity.QqFriendSessionChattingRelation;
+import com.easy.qq.entity.QqFriends;
 import com.easy.qq.mapper.QqAddFriendMessageMapper;
 import com.easy.qq.mapper.QqFriendChattingRecordsMapper;
 import com.easy.qq.mapper.QqFriendSessionChattingRelationMapper;
 import com.easy.qq.mapper.QqFriendSessionMapper;
 import com.easy.qq.web.send.vo.MessageVo;
+import com.easy.qq.web.send.vo.SendMsgOkVo;
+import com.easy.qq.web.send.vo.SendPersonMsgVo;
 import com.easy.qq.web.user.vo.ChattingRecordsVo;
 import io.netty.channel.Channel;
 import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
@@ -76,7 +80,7 @@ public class SendService {
      * @return
      */
     private ChattingRecordsVo sendMessageBefore(QqFriendChattingRecords record) {
-        //TODO 建立会话前校验是否可以发送消息：是否删除好友，黑名单，拒
+        //TODO 黑名单校验:
         //1.双方建立会话
         //1.1 获取接受方会话
         QqFriendSession toSession = createQqFriendSession(record, record.getToId(), record.getFromId());
@@ -133,5 +137,39 @@ public class SendService {
             sessionMapper.updateById(friendSession);
         }
         return friendSession;
+    }
+
+    /**
+     * 发送个人消息
+     *
+     * @param sendMsgVo
+     * @return
+     */
+    public Result<Void> sendPersonMsg(SendPersonMsgVo sendMsgVo) {
+        //1.检验是否好友
+        LambdaQueryChainWrapper<QqFriends> qqFriendsLambda = ChainWrappers.lambdaQueryChain(QqFriends.class);
+        QqFriends one = qqFriendsLambda.eq(QqFriends::getUserId, sendMsgVo.getFrom()).eq(QqFriends::getFriendUserId, sendMsgVo.getTo()).eq(QqFriends::getFriendType, FriendTypeEnum.FRIEND).one();
+        if (one == null) {
+            throw new RuntimeException("对方不是您的好友");
+        }
+        one = qqFriendsLambda.eq(QqFriends::getUserId, sendMsgVo.getTo()).eq(QqFriends::getFriendUserId, sendMsgVo.getFrom()).eq(QqFriends::getFriendType, FriendTypeEnum.FRIEND).one();
+        if (one == null) {
+            throw new RuntimeException("您不是对方的好友");
+        }
+        QqFriendChattingRecords record = new QqFriendChattingRecords();
+        sendMsg(record, BusinessTypeEnum.FRIEND_MESSAGE);
+        return new Result(true, "发送成功", "200");
+    }
+
+    /**
+     * 消息已读回执
+     *
+     * @param vo
+     * @return
+     */
+    public Result<Void> sendMsgOk(SendMsgOkVo vo) {
+        int i = chattingRelationMapper.updateByIds(vo.getUserId(), vo.getIds());
+        //TODO 多端登录，处理其他端消息为已读
+        return new Result<>(true, "修改成功", "200");
     }
 }
